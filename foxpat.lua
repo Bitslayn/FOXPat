@@ -146,13 +146,14 @@ local function tick_patters(group)
 
 				-- Timer expired, decrease number of patters
 				group.counter = group.counter - 1
+				group.timers[uuid] = nil
 				if group.counter > 0 then
-					group.timers[uuid] = nil
 					goto continue
 				end
 
 				-- No more patters
 				call_events(group.events.onUnpat)
+
 				events.world_tick:remove(clock)
 				group.event:remove(tick)
 				do return end
