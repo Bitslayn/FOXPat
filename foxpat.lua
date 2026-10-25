@@ -200,12 +200,58 @@ local handlers = {
 			end
 		end,
 	},
-}
+	{
+		id = "catpat",
+		func = function(target_uuid, target_vars, x, y, z, mode)
+			avatar:store("catpat", {
+				confirm = function()
+					return target_uuid
+				end,
+			})
 
-local list = listFiles("./handlers")
-for i = 1, #list do
-	handlers[i + 1] = require(list[i])
-end
+			local mode_enum = { player = 1, skull = 2 }
+			local accepted = target_vars.catpat.pat(avatar:getUUID(), mode_enum[mode], x, y, z)
+			avatar:store("catpat")
+			assert(accepted)
+		end,
+	},
+	{
+		id = "PatCubed",
+		func = function(_, target_vars, x, y, z, mode)
+			local api
+			avatar:store("PatCubed", {
+				acceptor = function(_api)
+					api = _api
+				end,
+			})
+
+			target_vars.PatCubed.prompter(avatar:getUUID())
+
+			local accepted = api[mode](15, x, y, z)
+			avatar:store("PatCubed")
+			assert(accepted)
+		end,
+	},
+	{
+		id = "petpet",
+		func = function(target_uuid, target_vars, x, y, z, mode)
+			assert(not target_vars.noPats)
+
+			local mode_keys = { player = "petpet", skull = "petpet.playerHead" }
+			local noPats, noHearts = target_vars[mode_keys[mode]](avatar:getUUID(), 15, x, y, z)
+			assert(not noPats)
+
+			if noHearts then return end
+			local pos = vec(x, y, z)
+			if mode == "player" then
+				local entity = world.getEntity(target_uuid)
+				create_particle(pos, entity:getBoundingBox())
+			elseif mode == "skull" then
+				create_particle(pos + vec(0.5, 0, 0.5), vec(0.5, 0.5, 0.5))
+			end
+		end,
+	},
+}
 
 ---Calls the function safely avoiding stack overflow errors
 ---
@@ -336,7 +382,7 @@ local pat_cooldown = 0
 local function pat_loop()
 	pat_cooldown = pat_cooldown % lib.config.pat_cooldown + 1
 	if pat_cooldown ~= 1 then return end
-	
+
 	local point_a = player:getPos():add(0, player:getEyeHeight()):add(renderer:getEyeOffset())
 	local point_b = point_a + player:getLookDir() * lib.config.pat_distance
 
