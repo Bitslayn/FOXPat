@@ -176,7 +176,7 @@ end
 local function accept_patter(group, uuid, ...)
 	if not group.timers[uuid] then
 		if group.counter == 0 then
-			queue_events(group, group.events.onPat)
+			queue_events(group.events.onPat)
 			tick_patters(group)
 		end
 
@@ -184,7 +184,7 @@ local function accept_patter(group, uuid, ...)
 	end
 
 	group.timers[uuid] = lib.config.expire_time
-	queue_events(group, group.events.eachPat, world.getEntity(uuid), ...)
+	queue_events(group.events.eachPat, world.getEntity(uuid), ...)
 end
 
 --#ENDREGION --=================================================================================================================
@@ -302,6 +302,8 @@ local function try_patting(uuid, target, mode)
 		end
 	end
 end
+
+lib.pat = try_patting
 
 local isHost = host:isHost()
 
