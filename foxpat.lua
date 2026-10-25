@@ -6,7 +6,6 @@ ____  ___ __   __
 FOX's Patpat v2.0-dev
 
 TODO Reset whitelists before releasing
-TODO Cleanup configs and script tbh
 
 Github: https://github.com/Bitslayn/TODO
 ]]
@@ -19,26 +18,28 @@ Github: https://github.com/Bitslayn/TODO
 local lib = {}
 
 ---@class FOXPat.Config
----@field whitelist table<string, boolean> List of names or uuids that are allowed to pat you.
----@field isBlacklist boolean Whether the whitelist table acts as a blacklist.
----@field expire_time integer Amount of ticks to wait before calling onUnpat.
----@field pat_keybind Minecraft.keyCode The key you need to press to pat players.
----@field crouch_keybind Minecraft.keyCode? The key you need to have held along with the pat keybind to start patting. Setting this key to nil will disable the bind.
----@field pat_cooldown integer
 lib.config = {
+	---List of names or uuids that are allowed to pat you
+	---@type table<string, boolean>
 	whitelist = {
 		Simon255 = true,
 		Bitslayn = true,
 		purpledeni = true,
 	},
+	---Whether the whitelists table acts as a blacklist
 	isBlacklist = false,
 
-	-- TODO clean up configs
-
-	expire_time = 15,
-	crouch_pat = true,
-	pat_cooldown = 3,
+	---Your patting reach in blocks
 	pat_distance = 4.5,
+	---Whether you need to be crouching to pat
+	crouch_pat = true,
+	---Whether you need an empty hand to pat
+	empty_hand = true,
+
+	---How often pats should be sent in ticks
+	pat_cooldown = 3,
+	---Amount of ticks to wait before calling onUnpat
+	expire_time = 15,
 }
 
 ---@class FOXPat.Events
@@ -232,7 +233,7 @@ local handlers = {
 
 			target_vars.PatCubed.prompter(avatar:getUUID())
 
-			local accepted = api[mode](15, x, y, z)
+			local accepted = api[mode](lib.config.expire_time, x, y, z)
 			avatar:store("PatCubed")
 			assert(accepted)
 		end,
@@ -243,7 +244,7 @@ local handlers = {
 			assert(not target_vars.noPats)
 
 			local mode_keys = { player = "petpet", skull = "petpet.playerHead" }
-			local noPats, noHearts = target_vars[mode_keys[mode]](avatar:getUUID(), 15, x, y, z)
+			local noPats, noHearts = target_vars[mode_keys[mode]](avatar:getUUID(), lib.config.expire_time, x, y, z)
 			assert(not noPats)
 
 			if noHearts then return end
@@ -413,6 +414,7 @@ local crouch_keybind = keybinds:fromVanilla("key.sneak")
 pat_keybind:onPress(function()
 	if host:getScreen() or action_wheel:isEnabled() or host:isCursorUnlocked() then return end
 	if lib.config.crouch_pat and not crouch_keybind:isPressed() then return end
+	if lib.config.empty_hand and player:getHeldItem().id ~= "minecraft:air" then return end
 	events.tick:register(pat_loop)
 end)
 
