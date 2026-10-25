@@ -299,6 +299,18 @@ local function try_patting(uuid, target, mode)
 	end
 end
 
+---Tries to pat the target
+---@param target BlockState|LivingEntity|Player
+local function pat_generic(target)
+	if type(target) == "LivingEntityAPI" then
+		try_patting(target:getUUID(), target, "entity")
+	elseif type(target) == "PlayerAPI" then
+		try_patting(target:getUUID(), target, "player")
+	elseif type(target) == "BlockState" then
+		try_patting(get_skull_uuid(target), target, "skull")
+	end
+end
+
 local isHost = host:isHost()
 
 ---@param uuid string
@@ -395,11 +407,8 @@ local function pat_targeted()
 		block = nil
 	end
 
-	if block then
-		try_patting(get_skull_uuid(block), block, "skull")
-	elseif entity then
-		try_patting(entity:getUUID(), entity, entity:isPlayer() and "player" or "entity")
-	end
+	---@diagnostic disable-next-line: param-type-mismatch
+	pat_generic(block or entity)
 end
 
 local pat_keybind = keybinds:fromVanilla("key.use")
