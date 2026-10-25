@@ -1,7 +1,5 @@
 -- Adds support for patting players using Auria's catpat
 
-local mode_enum = { player = 1, skull = 2 }
-
 return {
 	id = "catpat",
 	---@param target_uuid string
@@ -16,6 +14,8 @@ return {
 				return target_uuid
 			end,
 		})
+
+		local mode_enum = { player = 1, skull = 2 }
 
 		local accepted = target_vars.catpat.pat(avatar:getUUID(), mode_enum[mode], x, y, z)
 		avatar:store("catpat")

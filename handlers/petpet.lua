@@ -1,7 +1,5 @@
 -- Adds support for patting players using the classic petpet
 
-local mode_keys = { player = "petpet", skull = "petpet.playerHead" }
-
 ---Creates a single heart particle around the position within the bounding box size.
 ---@param pos Vector3
 ---@param size Vector3
@@ -20,6 +18,8 @@ return {
 	---@param mode FOXPat.Mode
 	func = function(target_uuid, target_vars, x, y, z, mode)
 		assert(not target_vars.noPats)
+
+		local mode_keys = { player = "petpet", skull = "petpet.playerHead" }
 
 		local noPats, noHearts = target_vars[mode_keys[mode]](avatar:getUUID(), 15, x, y, z)
 

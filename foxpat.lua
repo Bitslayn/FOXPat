@@ -7,7 +7,6 @@ FOX's Patpat v2.0-dev
 
 TODO Reset whitelists before releasing
 TODO Cleanup configs and script tbh
-TODO Fix raycasting from third person
 
 Github: https://github.com/Bitslayn/TODO
 ]]
@@ -69,6 +68,10 @@ lib.events.skull = {
 	eachPat = {},
 }
 
+--#ENDREGION --=================================================================================================================
+--#REGION ˚♡ Helpers ♡˚
+--==============================================================================================================================
+
 ---Creates a single heart particle around the position within the bounding box size.
 ---@param pos Vector3
 ---@param size Vector3
@@ -77,8 +80,12 @@ local function create_particle(pos, size)
 	particles:newParticle("heart", offset * size + pos)
 end
 
-local function play_animation()
-	host:swingArm()
+---Grabs the uuid from this skull's nbt
+---@param block BlockState
+---@return string?
+local function get_skull_uuid(block)
+	local nbt = block:getEntityData()
+	return nbt and nbt.SkullOwner and nbt.SkullOwner.Id and client.intUUIDToString(table.unpack(nbt.SkullOwner.Id))
 end
 
 --#ENDREGION --=================================================================================================================
@@ -201,6 +208,8 @@ for i = 1, #list do
 end
 
 ---Calls the function safely avoiding stack overflow errors
+---
+---Squashed based on auria's version
 ---@param func function
 local function safe_call(func)
 	local vec = vec(1, 2)
@@ -221,28 +230,24 @@ local function try_patting(uuid, target, mode)
 
 	if mode == "entity" then ---@cast target Entity
 		create_particle(target:getPos(client.getFrameTime()), target:getBoundingBox())
-		play_animation()
+		host:swingArm()
 		pings.foxpat_entity(uuid)
 	elseif mode == "player" then
 		pings.foxpat_player(uuid)
 	elseif mode == "skull" then
-		pings.foxpat_skull(uuid, x, y, z)
+		pings.foxpat_skull(x, y, z)
 	end
 
 	local vars = world.avatarVars()[uuid]
 	if not vars then return end
 
 	for i = 1, #handlers do
-		if not vars[handlers[i].id] then
-			goto continue
+		if vars[handlers[i].id] then
+			safe_call(function()
+				handlers[i].func(uuid, vars, x, y, z, mode)
+				host:swingArm()
+			end)
 		end
-
-		safe_call(function()
-			handlers[i].func(uuid, vars, x, y, z, mode)
-			play_animation()
-		end)
-
-		::continue::
 	end
 end
 
@@ -267,9 +272,10 @@ end
 ---@param x integer
 ---@param y integer
 ---@param z integer
-function pings.foxpat_skull(uuid, x, y, z)
+function pings.foxpat_skull(x, y, z)
 	if isHost then return end
-	try_patting(uuid, world.getBlockState(x, y, z), "skull")
+	local block = world.getBlockState(x, y, z)
+	try_patting(get_skull_uuid(block), world.getBlockState(x, y, z), "skull")
 end
 
 --#ENDREGION --=================================================================================================================
@@ -321,14 +327,6 @@ end
 --#ENDREGION --=================================================================================================================
 --#REGION ˚♡ Keybind ♡˚
 --==============================================================================================================================
-
----Grabs the uuid from this skull's nbt
----@param block BlockState
----@return string?
-local function get_skull_uuid(block)
-	local nbt = block:getEntityData()
-	return nbt and nbt.SkullOwner and nbt.SkullOwner.Id and client.intUUIDToString(table.unpack(nbt.SkullOwner.Id))
-end
 
 local pat_cooldown = 0
 
