@@ -72,6 +72,11 @@ lib.events.skull = {
 --#REGION ˚♡ Helpers ♡˚
 --==============================================================================================================================
 
+---Swings your arm when you're patting something
+local function swing_arm()
+	host:swingArm()
+end
+
 ---Creates a single heart particle around the position within the bounding box size.
 ---@param pos Vector3
 ---@param size Vector3
@@ -276,7 +281,7 @@ local function try_patting(uuid, target, mode)
 
 	if mode == "entity" then ---@cast target Entity
 		create_particle(target:getPos(client.getFrameTime()), target:getBoundingBox())
-		host:swingArm()
+		swing_arm()
 		pings.foxpat_entity(uuid)
 	elseif mode == "player" then
 		pings.foxpat_player(uuid)
@@ -291,7 +296,7 @@ local function try_patting(uuid, target, mode)
 		if vars[handlers[i].id] then
 			safe_call(function()
 				handlers[i].func(uuid, vars, x, y, z, mode)
-				host:swingArm()
+				swing_arm()
 			end)
 		end
 	end
