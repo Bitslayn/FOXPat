@@ -299,8 +299,6 @@ local function try_patting(uuid, target, mode)
 	end
 end
 
-lib.pat = try_patting
-
 local isHost = host:isHost()
 
 ---@param uuid string
