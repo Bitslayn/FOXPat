@@ -384,17 +384,15 @@ end
 
 local pat_cooldown = 0
 
----Ran while holding the pat keybind
----
----Sorts and attempts to pat what the player is looking at
-local function pat_loop()
+---Pats the closest pattable thing in your line of sight
+local function pat_targeted()
 	pat_cooldown = pat_cooldown % lib.config.pat_cooldown + 1
 	if pat_cooldown ~= 1 then return end
 
 	local point_a = player:getPos():add(0, player:getEyeHeight()):add(renderer:getEyeOffset())
 	local point_b = point_a + player:getLookDir() * lib.config.pat_distance
 
-	local block, block_hit = raycast:block(point_a, point_b, "VISUAL")
+	local block, block_hit = raycast:block(point_a, point_b)
 	local entity, entity_hit = raycast:entity(point_a, point_b, function(entity)
 		return entity ~= player
 	end)
@@ -414,15 +412,15 @@ local pat_keybind = keybinds:fromVanilla("key.use")
 local crouch_keybind = keybinds:fromVanilla("key.sneak")
 
 pat_keybind:onPress(function()
-	if host:getScreen() or action_wheel:isEnabled() or host:isCursorUnlocked() then return end
+	if action_wheel:isEnabled() or host:isCursorUnlocked() then return end
 	if lib.config.crouch_pat and not crouch_keybind:isPressed() then return end
 	if lib.config.empty_hand and player:getHeldItem().id ~= "minecraft:air" then return end
-	events.tick:register(pat_loop)
+	events.tick:register(pat_targeted)
 end)
 
 pat_keybind:onRelease(function()
-	events.tick:remove(pat_loop)
 	pat_cooldown = 0
+	events.tick:remove(pat_targeted)
 end)
 
 --#ENDREGION
