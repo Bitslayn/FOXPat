@@ -128,37 +128,34 @@ local function tick_patters(group)
 	end
 
 	local function tick()
+		-- Call all queued events
 		for i = 1, #queued_events do
 			call_events(table.unpack(queued_events[i]))
 		end
 		queued_events = {}
 
+		-- Process all ticks elapsed
 		for _ = 1, ticks do
 			call_events(group.events.whilePat)
 
+			-- Tick timers
 			for uuid, time in pairs(group.timers) do
-				-- Count down timer
 				time = time - 1
-				if time > 0 then
-					group.timers[uuid] = time
-					goto continue
-				end
+				group.timers[uuid] = time
 
-				-- Timer expired, decrease number of patters
-				group.counter = group.counter - 1
-				group.timers[uuid] = nil
-				if group.counter > 0 then
-					goto continue
+				if time == 0 then
+					group.timers[uuid] = nil
+					group.counter = group.counter - 1
 				end
+			end
 
-				-- No more patters
+			-- Stop patting
+			if group.counter == 0 then
 				call_events(group.events.onUnpat)
 
 				events.world_tick:remove(clock)
 				group.event:remove(tick)
-				do return end
-
-				::continue::
+				break
 			end
 		end
 		ticks = 0
@@ -168,9 +165,7 @@ local function tick_patters(group)
 	group.event:register(tick)
 end
 
----Call this function to initialize patting.
----
----Takes the patting group, the patter uuid, and optional callbacks passed into the eachPat event.
+---Initializes patting and queues events
 ---@param group FOXPat.Group
 ---@param uuid string
 ---@param ... any
