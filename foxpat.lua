@@ -27,7 +27,7 @@ lib.config = {
 		purpledeni = true,
 	},
 	---Whether the whitelists table acts as a blacklist
-	isBlacklist = false,
+	is_blacklist = false,
 
 	---Your patting reach in blocks
 	pat_distance = 4.5,
@@ -38,7 +38,7 @@ lib.config = {
 
 	---How often pats should be sent in ticks
 	pat_cooldown = 3,
-	---Amount of ticks to wait before calling onUnpat
+	---Amount of ticks to wait before expiring a pat
 	expire_time = 15,
 }
 
@@ -46,27 +46,27 @@ lib.config = {
 lib.events = {}
 
 ---@class FOXPat.Events.Entity
----@field onPat fun()[] This event gets called *once* when anyone starts patting.
----@field onUnpat fun()[] This event gets called *once* when your last patter stops patting.
----@field whilePat fun()[] This event gets called every tick while being patted.
----@field eachPat fun(patter: Player)[] This event gets called for every individual pat received.
+---@field on_pat fun()[] This event gets called *once* when anyone starts patting.
+---@field on_unpat fun()[] This event gets called *once* when your last patter stops patting.
+---@field while_pat fun()[] This event gets called every tick while being patted.
+---@field each_pat fun(patter: Player)[] This event gets called for every individual pat received.
 lib.events.entity = {
-	onPat = {},
-	onUnpat = {},
-	whilePat = {},
-	eachPat = {},
+	on_pat = {},
+	on_unpat = {},
+	while_pat = {},
+	each_pat = {},
 }
 
 ---@class FOXPat.Events.Skull
----@field onPat fun()[] This event gets called *once* when anyone starts patting.
----@field onUnpat fun()[] This event gets called *once* when your last patter stops patting.
----@field whilePat fun()[] This event gets called every tick while being patted.
----@field eachPat fun(patter: Player, pos: Vector3)[] This event gets called for every individual pat received.
+---@field on_pat fun()[] This event gets called *once* when anyone starts patting.
+---@field on_unpat fun()[] This event gets called *once* when your last patter stops patting.
+---@field while_pat fun()[] This event gets called every tick while being patted.
+---@field each_pat fun(patter: Player, pos: Vector3)[] This event gets called for every individual pat received.
 lib.events.skull = {
-	onPat = {},
-	onUnpat = {},
-	whilePat = {},
-	eachPat = {},
+	on_pat = {},
+	on_unpat = {},
+	while_pat = {},
+	each_pat = {},
 }
 
 ---@class FOXPat.Action
@@ -128,7 +128,7 @@ local function tick_patters(group)
 
 		-- Process all ticks elapsed
 		for _ = 1, ticks do
-			call_events(group.events.whilePat)
+			call_events(group.events.while_pat)
 
 			-- Tick timers
 			for uuid, time in pairs(group.timers) do
@@ -143,7 +143,7 @@ local function tick_patters(group)
 
 			-- Stop patting
 			if group.counter == 0 then
-				call_events(group.events.onUnpat)
+				call_events(group.events.on_unpat)
 
 				events.world_tick:remove(clock)
 				group.event:remove(tick)
@@ -164,7 +164,7 @@ end
 local function accept_patter(group, uuid, ...)
 	if not group.timers[uuid] then
 		if group.counter == 0 then
-			queue_events(group.events.onPat)
+			queue_events(group.events.on_pat)
 			tick_patters(group)
 		end
 
@@ -172,7 +172,7 @@ local function accept_patter(group, uuid, ...)
 	end
 
 	group.timers[uuid] = lib.config.expire_time
-	queue_events(group.events.eachPat, world.getEntity(uuid), ...)
+	queue_events(group.events.each_pat, world.getEntity(uuid), ...)
 end
 
 --#ENDREGION --=================================================================================================================
@@ -351,7 +351,7 @@ local skull_group = { events = lib.events.skull, event = events.skull_render, ti
 ---@return boolean
 local function validate(uuid)
 	assert(world.avatarVars()[avatar:getUUID()].FOXPat.session_id == session_id)
-	return (lib.config.whitelist[uuid] or lib.config.whitelist[world.getEntity(uuid):getName()]) and not lib.config.isBlacklist
+	return (lib.config.whitelist[uuid] or lib.config.whitelist[world.getEntity(uuid):getName()]) and not lib.config.is_blacklist
 end
 
 ---Pats this avatar's entity
