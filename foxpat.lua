@@ -218,7 +218,7 @@ local handlers = {
 
 			target_vars.PatCubed.prompter(avatar:getUUID())
 
-			local mode = is_block and "block" or "player"
+			local mode = is_block and "skull" or "player"
 			local accepted = api[mode](lib.config.expire_time, pos:unpack())
 			avatar:store("PatCubed")
 			assert(accepted)
