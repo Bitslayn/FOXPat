@@ -292,10 +292,10 @@ local function try_patting(target)
 		return
 	end
 
-	local pos = target:getPos()
-
 	local target_vars = world.avatarVars()[target_uuid]
 	if not target_vars then return end
+
+	local pos = target:getPos()
 
 	for i = 1, #handlers do
 		if target_vars[handlers[i].id] then
