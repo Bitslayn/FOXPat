@@ -86,14 +86,6 @@ local function create_particle(pos, size)
 	particles:newParticle("heart", offset * size + pos)
 end
 
----Grabs the uuid from this skull's nbt
----@param block BlockState
----@return string?
-local function get_skull_uuid(block)
-	local nbt = block:getEntityData()
-	return nbt and nbt.SkullOwner and nbt.SkullOwner.Id and client.intUUIDToString(table.unpack(nbt.SkullOwner.Id))
-end
-
 --#ENDREGION --=================================================================================================================
 --#REGION ˚♡ Incoming Library ♡˚
 --==============================================================================================================================
@@ -255,6 +247,16 @@ local handlers = {
 	},
 }
 
+---Grabs the uuid from this skull's nbt
+---
+---Always returns a string to avoid unintentionally erroring when indexing avatar vars
+---@param block BlockState
+---@return string
+local function get_skull_uuid(block)
+	local nbt = block:getEntityData()
+	return nbt and nbt.SkullOwner and nbt.SkullOwner.Id and client.intUUIDToString(table.unpack(nbt.SkullOwner.Id)) or ""
+end
+
 ---Calls the function safely avoiding stack overflow errors
 ---
 ---Squashed based on auria's version
@@ -268,46 +270,39 @@ local function safe_call(func)
 end
 
 ---Pats the target if they allow pats from you
----@param uuid string?
----@param target BlockState|Entity?
----@param mode FOXPat.Mode?
-local function try_patting(uuid, target, mode)
-	if not (uuid and target and mode) then return end
+---@param target BlockState|Entity
+local function try_patting(target)
+	local target_uuid, mode
+	if type(target) == "LivingEntityAPI" then ---@cast target LivingEntity
+		pings.foxpat_entity(target:getUUID())
+		create_particle(target:getPos(client.getFrameTime()), target:getBoundingBox())
+		swing_arm()
+
+		return
+	elseif type(target) == "PlayerAPI" then ---@cast target Player
+		pings.foxpat_entity(target:getUUID())
+		target_uuid = target:getUUID()
+		mode = "player"
+	elseif type(target) == "BlockState" then
+		pings.foxpat_skull(target:getPos():unpack())
+		target_uuid = get_skull_uuid(target)
+		mode = "skull"
+	else
+		return
+	end
 
 	local x, y, z = target:getPos():unpack()
 
-	if mode == "entity" then ---@cast target Entity
-		create_particle(target:getPos(client.getFrameTime()), target:getBoundingBox())
-		swing_arm()
-		pings.foxpat_entity(uuid)
-	elseif mode == "player" then
-		pings.foxpat_player(uuid)
-	elseif mode == "skull" then
-		pings.foxpat_skull(x, y, z)
-	end
-
-	local vars = world.avatarVars()[uuid]
-	if not vars then return end
+	local target_vars = world.avatarVars()[target_uuid]
+	if not target_vars then return end
 
 	for i = 1, #handlers do
-		if vars[handlers[i].id] then
+		if target_vars[handlers[i].id] then
 			safe_call(function()
-				handlers[i].func(uuid, vars, x, y, z, mode)
+				handlers[i].func(target_uuid, target_vars, x, y, z, mode)
 				swing_arm()
 			end)
 		end
-	end
-end
-
----Tries to pat the target
----@param target BlockState|LivingEntity|Player
-local function pat_generic(target)
-	if type(target) == "LivingEntityAPI" then
-		try_patting(target:getUUID(), target, "entity")
-	elseif type(target) == "PlayerAPI" then
-		try_patting(target:getUUID(), target, "player")
-	elseif type(target) == "BlockState" then
-		try_patting(get_skull_uuid(target), target, "skull")
 	end
 end
 
@@ -317,16 +312,8 @@ local isHost = host:isHost()
 function pings.foxpat_entity(uuid)
 	if isHost then return end
 	local entity = world.getEntity(uuid)
-	if not entity or entity:isPlayer() then return end
-	create_particle(entity:getPos(client.getFrameTime()), entity:getBoundingBox())
-end
-
----@param uuid string
-function pings.foxpat_player(uuid)
-	if isHost then return end
-	local entity = world.getEntity(uuid)
 	if not entity then return end
-	try_patting(uuid, entity, "player")
+	try_patting(entity)
 end
 
 ---@param x integer
@@ -334,9 +321,10 @@ end
 ---@param z integer
 function pings.foxpat_skull(x, y, z)
 	if isHost then return end
-	local block = world.getBlockState(x, y, z)
-	try_patting(get_skull_uuid(block), world.getBlockState(x, y, z), "skull")
+	try_patting(world.getBlockState(x, y, z))
 end
+
+lib.pat = try_patting
 
 --#ENDREGION --=================================================================================================================
 --#REGION ˚♡ Avatar Vars ♡˚
@@ -408,7 +396,7 @@ local function pat_targeted()
 	end
 
 	---@diagnostic disable-next-line: param-type-mismatch
-	pat_generic(block or entity)
+	try_patting(block or entity)
 end
 
 local pat_keybind = keybinds:fromVanilla("key.use")
