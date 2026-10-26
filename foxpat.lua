@@ -5,9 +5,7 @@ ____  ___ __   __
 |_|  \___//_/ \_\
 FOX's Patpat v2.0-dev
 
-TODO Reset whitelists before releasing
-
-Github: https://github.com/Bitslayn/TODO
+Github: https://github.com/Bitslayn/FOXPat
 ]]
 
 --==============================================================================================================================
@@ -22,9 +20,8 @@ lib.config = {
 	---List of names or uuids that are allowed to pat you
 	---@type table<string, boolean>
 	whitelist = {
-		Simon255 = true,
-		Bitslayn = true,
-		purpledeni = true,
+		Steve = true,
+		["8667ba71-b85a-4004-af54-457a9734eed7"] = true,
 	},
 	---Whether the whitelists table acts as a blacklist
 	is_blacklist = false,
