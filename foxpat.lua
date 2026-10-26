@@ -372,7 +372,7 @@ function vars.skull_pat(uuid, x, y, z)
 	if not validate(uuid) then return false end
 	local pos = vec(x, y, z):floor()
 	accept_patter(skull_group, uuid, pos)
-	lib.action.create_particle(pos + vec(0.5, 0, 0.5), vec(0.5, 0, 0.5))
+	lib.action.create_particle(pos + vec(0.5, 0, 0.5), vec(0.5, 0.5, 0.5))
 	return true
 end
 
