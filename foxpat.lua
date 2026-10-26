@@ -69,19 +69,19 @@ lib.events.skull = {
 	eachPat = {},
 }
 
---#ENDREGION --=================================================================================================================
---#REGION ˚♡ Helpers ♡˚
---==============================================================================================================================
+---@class FOXPat.Action
+lib.action = {}
 
 ---Swings your arm when you're patting something
-local function swing_arm()
+---@param pos Vector3
+function lib.action.swing_arm(pos)
 	host:swingArm()
 end
 
 ---Creates a single heart particle around the position within the bounding box size.
 ---@param pos Vector3
 ---@param size Vector3
-local function create_particle(pos, size)
+function lib.action.create_particle(pos, size)
 	local offset = vec(math.random(), math.random(), math.random()) - vec(0.5, 0, 0.5)
 	particles:newParticle("heart", offset * size + pos)
 end
@@ -239,9 +239,9 @@ local handlers = {
 			local pos = vec(x, y, z)
 			if mode == "player" then
 				local entity = world.getEntity(target_uuid)
-				create_particle(pos, entity:getBoundingBox())
+				lib.action.create_particle(pos, entity:getBoundingBox())
 			elseif mode == "skull" then
-				create_particle(pos + vec(0.5, 0, 0.5), vec(0.5, 0.5, 0.5))
+				lib.action.create_particle(pos + vec(0.5, 0, 0.5), vec(0.5, 0.5, 0.5))
 			end
 		end,
 	},
@@ -274,24 +274,30 @@ end
 local function try_patting(target)
 	local target_uuid, mode
 	if type(target) == "LivingEntityAPI" then ---@cast target LivingEntity
-		pings.foxpat_entity(target:getUUID())
-		create_particle(target:getPos(client.getFrameTime()), target:getBoundingBox())
-		swing_arm()
+		target_uuid = target:getUUID()
 
+		local pos = target:getPos(client.getFrameTime())
+		lib.action.create_particle(pos, target:getBoundingBox())
+		lib.action.swing_arm(pos)
+
+		pings.foxpat_entity(target_uuid)
 		return
 	elseif type(target) == "PlayerAPI" then ---@cast target Player
-		pings.foxpat_entity(target:getUUID())
 		target_uuid = target:getUUID()
 		mode = "player"
+
+		pings.foxpat_entity(target_uuid)
 	elseif type(target) == "BlockState" then
-		pings.foxpat_skull(target:getPos():unpack())
 		target_uuid = get_skull_uuid(target)
 		mode = "skull"
+
+		pings.foxpat_skull(target:getPos():unpack())
 	else
 		return
 	end
 
-	local x, y, z = target:getPos():unpack()
+	local pos = target:getPos()
+	local x, y, z = pos:unpack()
 
 	local target_vars = world.avatarVars()[target_uuid]
 	if not target_vars then return end
@@ -300,7 +306,7 @@ local function try_patting(target)
 		if target_vars[handlers[i].id] then
 			safe_call(function()
 				handlers[i].func(target_uuid, target_vars, x, y, z, mode)
-				swing_arm()
+				lib.action.swing_arm(pos)
 			end)
 		end
 	end
@@ -354,7 +360,7 @@ end
 function vars.entity_pat(uuid)
 	if not validate(uuid) then return false end
 	accept_patter(entity_group, uuid)
-	create_particle(player:getPos(client.getFrameTime()), player:getBoundingBox())
+	lib.action.create_particle(player:getPos(client.getFrameTime()), player:getBoundingBox())
 	return true
 end
 
@@ -368,7 +374,7 @@ function vars.skull_pat(uuid, x, y, z)
 	if not validate(uuid) then return false end
 	local pos = vec(x, y, z):floor()
 	accept_patter(skull_group, uuid, pos)
-	create_particle(pos + vec(0.5, 0, 0.5), vec(0.5, 0, 0.5))
+	lib.action.create_particle(pos + vec(0.5, 0, 0.5), vec(0.5, 0, 0.5))
 	return true
 end
 
