@@ -5,6 +5,9 @@ ____  ___ __   __
 |_|  \___//_/ \_\
 FOX's Patpat v2.0-dev
 
+TODO Make uuid pings smaller
+TODO Make script smaller
+
 Github: https://github.com/Bitslayn/FOXPat
 ]]
 
@@ -164,7 +167,6 @@ local function accept_patter(group, uuid, ...)
 			queue_events(group.events.on_pat)
 			tick_patters(group)
 		end
-
 		group.counter = group.counter + 1
 	end
 
@@ -176,39 +178,37 @@ end
 --#REGION ˚♡ Outgoing Library ♡˚
 --==============================================================================================================================
 
----@alias FOXPat.Mode "entity"|"player"|"skull"
-
----@type {id: string, func: fun(target_uuid: string, target_vars: table, x: integer, y: integer, z: integer, mode: FOXPat.Mode)}[]
+---@type {id: string, func: fun(target_uuid: string, target_vars: table, pos: Vector3, is_block: boolean)}[]
 local handlers = {
 	{
 		id = "FOXPat",
-		func = function(_, target_vars, x, y, z, mode)
+		func = function(_, target_vars, pos, is_block)
 			local uuid = avatar:getUUID()
-			if mode == "player" then
+			if is_block then
+				assert(target_vars.FOXPat.skull_pat(uuid, pos:unpack()))
+			else
 				assert(target_vars.FOXPat.entity_pat(uuid))
-			elseif mode == "skull" then
-				assert(target_vars.FOXPat.skull_pat(uuid, x, y, z))
 			end
 		end,
 	},
 	{
 		id = "catpat",
-		func = function(target_uuid, target_vars, x, y, z, mode)
+		func = function(target_uuid, target_vars, pos, is_block)
 			avatar:store("catpat", {
 				confirm = function()
 					return target_uuid
 				end,
 			})
 
-			local mode_enum = { player = 1, skull = 2 }
-			local accepted = target_vars.catpat.pat(avatar:getUUID(), mode_enum[mode], x, y, z)
+			local id = is_block and 2 or 1
+			local accepted = target_vars.catpat.pat(avatar:getUUID(), id, pos:unpack())
 			avatar:store("catpat")
 			assert(accepted)
 		end,
 	},
 	{
 		id = "PatCubed",
-		func = function(_, target_vars, x, y, z, mode)
+		func = function(_, target_vars, pos, is_block)
 			local api
 			avatar:store("PatCubed", {
 				acceptor = function(_api)
@@ -218,27 +218,27 @@ local handlers = {
 
 			target_vars.PatCubed.prompter(avatar:getUUID())
 
-			local accepted = api[mode](lib.config.expire_time, x, y, z)
+			local mode = is_block and "block" or "player"
+			local accepted = api[mode](lib.config.expire_time, pos:unpack())
 			avatar:store("PatCubed")
 			assert(accepted)
 		end,
 	},
 	{
 		id = "petpet",
-		func = function(target_uuid, target_vars, x, y, z, mode)
+		func = function(target_uuid, target_vars, pos, is_block)
 			assert(not target_vars.noPats)
 
-			local mode_keys = { player = "petpet", skull = "petpet.playerHead" }
-			local noPats, noHearts = target_vars[mode_keys[mode]](avatar:getUUID(), lib.config.expire_time, x, y, z)
+			local key = is_block and "petpet.playerHead" or "petpet"
+			local noPats, noHearts = target_vars[key](avatar:getUUID(), lib.config.expire_time, pos:unpack())
 			assert(not noPats)
 
 			if noHearts then return end
-			local pos = vec(x, y, z)
-			if mode == "player" then
+			if is_block then
+				lib.action.create_particle(pos + vec(0.5, 0, 0.5), vec(0.5, 0.5, 0.5))
+			else
 				local entity = world.getEntity(target_uuid)
 				lib.action.create_particle(pos, entity:getBoundingBox())
-			elseif mode == "skull" then
-				lib.action.create_particle(pos + vec(0.5, 0, 0.5), vec(0.5, 0.5, 0.5))
 			end
 		end,
 	},
@@ -269,7 +269,7 @@ end
 ---Pats the target if they allow pats from you
 ---@param target BlockState|Entity
 local function try_patting(target)
-	local target_uuid, mode
+	local target_uuid, is_block
 	if type(target) == "LivingEntityAPI" then ---@cast target LivingEntity
 		target_uuid = target:getUUID()
 
@@ -281,12 +281,11 @@ local function try_patting(target)
 		return
 	elseif type(target) == "PlayerAPI" then ---@cast target Player
 		target_uuid = target:getUUID()
-		mode = "player"
 
 		pings.foxpat_entity(target_uuid)
 	elseif type(target) == "BlockState" then
 		target_uuid = get_skull_uuid(target)
-		mode = "skull"
+		is_block = true
 
 		pings.foxpat_skull(target:getPos():unpack())
 	else
@@ -294,7 +293,6 @@ local function try_patting(target)
 	end
 
 	local pos = target:getPos()
-	local x, y, z = pos:unpack()
 
 	local target_vars = world.avatarVars()[target_uuid]
 	if not target_vars then return end
@@ -302,7 +300,7 @@ local function try_patting(target)
 	for i = 1, #handlers do
 		if target_vars[handlers[i].id] then
 			safe_call(function()
-				handlers[i].func(target_uuid, target_vars, x, y, z, mode)
+				handlers[i].func(target_uuid, target_vars, pos, is_block)
 				lib.action.swing_arm(pos)
 			end)
 		end
