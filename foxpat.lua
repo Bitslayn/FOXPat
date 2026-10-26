@@ -331,8 +331,7 @@ lib.pat = try_patting
 --#REGION ˚♡ Avatar Vars ♡˚
 --==============================================================================================================================
 
-local session_id = client.getSystemTime()
-local vars = { session_id = session_id }
+local vars = {}
 avatar:store("FOXPat", vars)
 
 ---@alias FOXPat.Group {events: table<string, function[]>, event: Event.Generic, timers: table<string, integer>, counter: integer }
@@ -345,7 +344,6 @@ local skull_group = { events = lib.events.skull, event = events.skull_render, ti
 ---@param uuid string
 ---@return boolean
 local function validate(uuid)
-	assert(world.avatarVars()[avatar:getUUID()].FOXPat.session_id == session_id)
 	if uuid == avatar:getUUID() then return true end
 	return (lib.config.whitelist[uuid] or lib.config.whitelist[world.getEntity(uuid):getName()]) and not lib.config.is_blacklist
 end
