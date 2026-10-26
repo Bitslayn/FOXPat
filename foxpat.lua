@@ -348,6 +348,7 @@ local skull_group = { events = lib.events.skull, event = events.skull_render, ti
 ---@return boolean
 local function validate(uuid)
 	assert(world.avatarVars()[avatar:getUUID()].FOXPat.session_id == session_id)
+	if uuid == avatar:getUUID() then return true end
 	return (lib.config.whitelist[uuid] or lib.config.whitelist[world.getEntity(uuid):getName()]) and not lib.config.is_blacklist
 end
 
