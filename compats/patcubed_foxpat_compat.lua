@@ -1,3 +1,6 @@
+-- This script allows you as a patcubed user to pat foxpat users
+-- Download this script and move it to your patcubed/compat folder
+
 return function(CONFIG)
 	local isHost = host:isHost()
 

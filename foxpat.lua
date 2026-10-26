@@ -23,8 +23,8 @@ lib.config = {
 	---List of names or uuids that are allowed to pat you
 	---@type table<string, boolean>
 	whitelist = {
-		Steve = true,
-		["8667ba71-b85a-4004-af54-457a9734eed7"] = true,
+		-- Steve = true,
+		-- ["8667ba71-b85a-4004-af54-457a9734eed7"] = true,
 	},
 	---Whether the whitelists table acts as a blacklist
 	is_blacklist = false,
@@ -218,8 +218,8 @@ local handlers = {
 
 			target_vars.PatCubed.prompter(avatar:getUUID())
 
-			local mode = is_block and "skull" or "player"
-			local accepted = api[mode](lib.config.expire_time, pos:unpack())
+			local key = is_block and "skull" or "player"
+			local accepted = api[key](lib.config.expire_time, pos:unpack())
 			avatar:store("PatCubed")
 			assert(accepted)
 		end,
