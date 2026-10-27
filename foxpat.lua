@@ -3,7 +3,7 @@ ____  ___ __   __
 | __|/ _ \\ \ / /
 | _|| (_) |> w <
 |_|  \___//_/ \_\
-FOX's Patpat v2.0
+FOX's Patpat v2.0b
 
 Github: https://github.com/Bitslayn/FOXPat
 ]]
@@ -333,21 +333,19 @@ avatar:store("FOXPat", vars)
 local entity_group = { events = lib.events.entity, event = events.render, timers = {}, counter = 0 }
 local skull_group = { events = lib.events.skull, event = events.skull_render, timers = {}, counter = 0 }
 
----Validates the uuid and pat functions
----
----Throws if the uuid or session is invalid
+---Returns if the uuid is whitelisted
 ---@param uuid string
 ---@return boolean
-local function validate(uuid)
+local function check_whitelist(uuid)
 	if uuid == avatar:getUUID() then return true end
-	return (lib.config.whitelist[uuid] or lib.config.whitelist[world.getEntity(uuid):getName()]) and not lib.config.use_blacklist
+	return (lib.config.whitelist[uuid] or lib.config.whitelist[world.getEntity(uuid):getName()] or false) ~= lib.config.use_blacklist
 end
 
 ---Pats this avatar's entity
 ---@param uuid string
 ---@return boolean accepted
 function vars.entity_pat(uuid)
-	if not validate(uuid) then return false end
+	if not check_whitelist(uuid) then return false end
 	accept_patter(entity_group, uuid)
 	lib.action.create_particle(player:getPos(client.getFrameTime()), player:getBoundingBox())
 	return true
@@ -360,7 +358,7 @@ end
 ---@param z number
 ---@return boolean accepted
 function vars.skull_pat(uuid, x, y, z)
-	if not validate(uuid) then return false end
+	if not check_whitelist(uuid) then return false end
 	local pos = vectors.vec3(x, y, z):floor()
 	accept_patter(skull_group, uuid, pos)
 	lib.action.create_particle(pos + vec(0.5, 0, 0.5), vec(0.5, 0.5, 0.5))
