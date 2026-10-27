@@ -14,28 +14,26 @@ return function(CONFIG)
 	---@param target BlockState|Entity
 	local function try_patting(target)
 		local my_uuid = avatar:getUUID()
-		
+
 		local pat_success
 		if type(target) == "PlayerAPI" then ---@cast target Player
 			local target_uuid = target:getUUID()
+			pings.foxpat_entity(client.uuidToIntArray(target_uuid))
 
 			local target_vars = world.avatarVars()[target_uuid]
 			if not (target_vars and target_vars.FOXPat) then return end
 
 			local ok, res = pcall(target_vars.FOXPat.entity_pat, my_uuid)
 			pat_success = ok and res
-			
-			pings.foxpat_entity(client.uuidToIntArray(target_uuid))
 		elseif type(target) == "BlockState" then
 			local target_uuid = get_skull_uuid(target)
-			
+			pings.foxpat_skull(target:getPos():unpack())
+
 			local target_vars = world.avatarVars()[target_uuid]
 			if not (target_vars and target_vars.FOXPat) then return end
 
 			local ok, res = pcall(target_vars.FOXPat.skull_pat, my_uuid, target:getPos():unpack())
 			pat_success = ok and res
-
-			pings.foxpat_skull(target:getPos():unpack())
 		else
 			return
 		end
