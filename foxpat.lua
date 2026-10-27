@@ -73,8 +73,7 @@ lib.events.skull = {
 lib.action = {}
 
 ---Swings your arm when you're patting something
----@param pos Vector3
-function lib.action.swing_arm(pos)
+function lib.action.swing_arm()
 	host:swingArm()
 end
 
@@ -273,9 +272,8 @@ local function try_patting(target)
 	if type(target) == "LivingEntityAPI" then ---@cast target LivingEntity
 		target_uuid = target:getUUID()
 
-		local pos = target:getPos(client.getFrameTime())
-		lib.action.create_particle(pos, target:getBoundingBox())
-		lib.action.swing_arm(pos)
+		lib.action.create_particle(target:getPos(client.getFrameTime()), target:getBoundingBox())
+		lib.action.swing_arm()
 
 		pings.foxpat_entity(target_uuid)
 		return
@@ -301,7 +299,7 @@ local function try_patting(target)
 		if target_vars[handlers[i].id] then
 			safe_call(function()
 				handlers[i].func(target_uuid, target_vars, pos, is_block)
-				lib.action.swing_arm(pos)
+				lib.action.swing_arm()
 			end)
 		end
 	end
