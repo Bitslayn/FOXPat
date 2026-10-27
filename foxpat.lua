@@ -27,7 +27,7 @@ lib.config = {
 		-- ["8667ba71-b85a-4004-af54-457a9734eed7"] = true,
 	},
 	---Whether the whitelists table acts as a blacklist
-	is_blacklist = false,
+	use_blacklist = false,
 
 	---Your patting reach in blocks
 	pat_distance = 4.5,
@@ -345,7 +345,7 @@ local skull_group = { events = lib.events.skull, event = events.skull_render, ti
 ---@return boolean
 local function validate(uuid)
 	if uuid == avatar:getUUID() then return true end
-	return (lib.config.whitelist[uuid] or lib.config.whitelist[world.getEntity(uuid):getName()]) and not lib.config.is_blacklist
+	return (lib.config.whitelist[uuid] or lib.config.whitelist[world.getEntity(uuid):getName()]) and not lib.config.use_blacklist
 end
 
 ---Pats this avatar's entity
