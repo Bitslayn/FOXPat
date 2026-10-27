@@ -25,7 +25,7 @@ return function(CONFIG)
 			local ok, res = pcall(target_vars.FOXPat.entity_pat, my_uuid)
 			pat_success = ok and res
 			
-			pings.foxpat_entity(target_uuid)
+			pings.foxpat_entity(client.uuidToIntArray(target_uuid))
 		elseif type(target) == "BlockState" then
 			local target_uuid = get_skull_uuid(target)
 			
@@ -45,10 +45,10 @@ return function(CONFIG)
 		end
 	end
 
-	---@param uuid string
-	function pings.foxpat_entity(uuid)
+	---@param ... integer
+	function pings.foxpat_entity(...)
 		if isHost then return end
-		local entity = world.getEntity(uuid)
+		local entity = world.getEntity(client.intUUIDToString(...))
 		if not entity then return end
 		try_patting(entity)
 	end
