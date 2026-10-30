@@ -264,7 +264,7 @@ lib.pat = try_patting
 --==============================================================================================================================
 
 local vars = {}
-avatar:store("FOXPat", vars)
+avatar:store("patpat", vars)
 
 ---@alias FOXPat.Group {events: table<string, function[]>, event: Event.Generic, timers: table<string, integer>, counter: integer }
 local entity_group = { events = lib.events.entity, event = events.render, timers = {}, counter = 0 }
@@ -281,7 +281,7 @@ end
 ---Pats this avatar's entity
 ---@param uuid string
 ---@return boolean accepted
-function vars.entity_pat(uuid)
+function vars.player(uuid)
 	if not check_whitelist(uuid) then return false end
 	accept_patter(entity_group, uuid)
 	lib.action.create_particle(player:getPos(client.getFrameTime()), player:getBoundingBox())
@@ -294,7 +294,7 @@ end
 ---@param y number
 ---@param z number
 ---@return boolean accepted
-function vars.skull_pat(uuid, x, y, z)
+function vars.skull(uuid, x, y, z)
 	if not check_whitelist(uuid) then return false end
 	local pos = vectors.vec3(x, y, z):floor()
 	accept_patter(skull_group, uuid, pos)
