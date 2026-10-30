@@ -224,7 +224,7 @@ local function try_patting(target)
 	local target_vars = world.avatarVars()[target_uuid]
 	if not target_vars then return end
 
-	local uuid = player:getUUID()
+	local uuid = avatar:getUUID()
 	local pos = target:getPos()
 
 	safe_call(function()
