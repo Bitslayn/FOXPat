@@ -3,7 +3,7 @@ ____  ___ __   __
 | __|/ _ \\ \ / /
 | _|| (_) |> w <
 |_|  \___//_/ \_\
-FOX's Patpat v2.0b
+FOX's Patpat v2.1
 
 Github: https://github.com/Bitslayn/FOXPat
 ]]
