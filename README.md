@@ -59,6 +59,15 @@ function foxpat.action.create_particle(pos, size)
 		particles:newParticle("cherry_leaves", offset * size + pos)
 	end
 end
+
+-- Prints and plays a sound whenever a non-whitelisted player tries patting you
+function foxpat.action.failed_pat(patter)
+	if host:isHost() then
+		print(patter:getName() .. " tried to pat you but isn't whitelisted")
+	end
+
+	sounds:playSound("minecraft:entity.skeleton.ambient", player:getPos())
+end
 ```
 
 Of course, if there are any features that FOXPat doesn't support that you need, you are free to modify FOXPat in any way you'd like. FOXPat is, by design, a simple script with only the bare minimum features required.

@@ -87,7 +87,9 @@ end
 ---This action gets called whenever someone not in your whitelist pats you.
 ---@param patter Player
 function lib.action.failed_pat(patter)
-	-- print(patter:getName() .. " tried to pat you but isn't whitelisted")
+	-- if host:isHost() then
+	-- 	print(patter:getName() .. " tried to pat you but isn't whitelisted")
+	-- end
 end
 
 --#ENDREGION --=================================================================================================================
