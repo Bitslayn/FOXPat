@@ -3,7 +3,7 @@ ____  ___ __   __
 | __|/ _ \\ \ / /
 | _|| (_) |> w <
 |_|  \___//_/ \_\
-FOX's Patpat v2.1
+FOX's Patpat v2.2
 
 Github: https://github.com/Bitslayn/FOXPat
 ]]
@@ -69,7 +69,9 @@ lib.events.skull = {
 ---@class FOXPat.Action
 lib.action = {}
 
----Swings your arm when you're patting something
+---Swings your arm when you're patting something.
+---
+---It is recommended to call `host:swingArm()` and use an animation override for compatibility.
 function lib.action.swing_arm()
 	host:swingArm()
 end
@@ -80,6 +82,12 @@ end
 function lib.action.create_particle(pos, size)
 	local offset = vec(math.random(), math.random(), math.random()) - vec(0.5, 0, 0.5)
 	particles:newParticle("heart", offset * size + pos)
+end
+
+---This action gets called whenever someone not in your whitelist pats you.
+---@param patter Player
+function lib.action.failed_pat(patter)
+	-- print(patter:getName() .. " tried to pat you but isn't whitelisted")
 end
 
 --#ENDREGION --=================================================================================================================
@@ -274,8 +282,19 @@ local skull_group = { events = lib.events.skull, event = events.skull_render, ti
 ---@param uuid string
 ---@return boolean
 local function check_whitelist(uuid)
-	if uuid == avatar:getUUID() then return true end
-	return (lib.config.whitelist[uuid] or lib.config.whitelist[world.getEntity(uuid):getName()] or false) ~= lib.config.use_blacklist
+	if uuid == avatar:getUUID() then return true end -- Allow self-pats
+
+	local ok, entity = pcall(world.getEntity, uuid)
+	if not (ok and entity) then return false end
+
+	---@cast entity Player
+
+	if (lib.config.whitelist[uuid] or lib.config.whitelist[entity:getName()] or false) == lib.config.use_blacklist then
+		lib.action.failed_pat(entity)
+		return false
+	end
+
+	return true
 end
 
 ---Pats this avatar's entity
