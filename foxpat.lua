@@ -204,7 +204,7 @@ local handlers = {
 			else
 				yesPats = target_vars.patpat.player(uuid)
 			end
-			
+
 			vars.target = nil
 			return yesPats, false
 		end,
@@ -273,9 +273,7 @@ local function try_patting(target)
 		return
 	end
 
-	local target_entity = world.getEntity(target_uuid)
-	if not target_entity then return end
-	local target_vars = target_entity:getVariable()
+	local target_vars = world.avatarVars()[target_uuid]
 	if not target_vars then return end
 
 	local pos = target:getPos()
@@ -293,7 +291,7 @@ local function try_patting(target)
 					if is_block then
 						lib.action.create_particle(pos + vec(0.5, 0, 0.5), vec(0.5, 0.5, 0.5))
 					else
-						lib.action.create_particle(pos, target_entity:getBoundingBox())
+						lib.action.create_particle(pos, target --[[@as Entity]]:getBoundingBox())
 					end
 				end
 			end)
