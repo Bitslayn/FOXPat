@@ -384,7 +384,7 @@ vars["petpet"] = function(uuid)
 end
 
 vars["petpet.playerHead"] = function(uuid, _, x, y, z)
-	return not vars.skull(uuid, x, y, z)
+	return not vars.skull(uuid, x, y, z), true
 end
 
 --#ENDREGION --=================================================================================================================
