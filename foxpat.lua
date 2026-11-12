@@ -3,7 +3,7 @@ ____  ___ __   __
 | __|/ _ \\ \ / /
 | _|| (_) |> w <
 |_|  \___//_/ \_\
-FOX's Patpat v2.3b
+FOX's Patpat v2.3c
 
 Github: https://github.com/Bitslayn/FOXPat
 ]]
@@ -280,6 +280,7 @@ local function try_patting(target)
 
 	for i = 1, #handlers do
 		if target_vars[handlers[i].id] then
+			local patSuccess
 			safe_call(function()
 				local yesPats, yesHearts = handlers[i].func(target_uuid, target_vars, pos, is_block)
 
@@ -294,7 +295,10 @@ local function try_patting(target)
 						lib.action.create_particle(pos, target --[[@as Entity]]:getBoundingBox())
 					end
 				end
+
+				patSuccess = true
 			end)
+			if patSuccess then return end
 		end
 	end
 end
