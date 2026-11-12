@@ -3,7 +3,7 @@ ____  ___ __   __
 | __|/ _ \\ \ / /
 | _|| (_) |> w <
 |_|  \___//_/ \_\
-FOX's Patpat v2.2
+FOX's Patpat v2.3
 
 Github: https://github.com/Bitslayn/FOXPat
 ]]
@@ -37,6 +37,9 @@ lib.config = {
 	pat_cooldown = 3,
 	---Amount of ticks to wait before expiring a pat
 	expire_time = 15,
+
+	---Whether the patter's uuid should be validated. False by default as this breaks compatibility with older modern pat scripts.
+	validate = false,
 }
 
 ---@class FOXPat.Events
@@ -184,6 +187,45 @@ end
 --#REGION ˚♡ Outgoing Library ♡˚
 --==============================================================================================================================
 
+---Avatar variables accessor
+local vars = {}
+
+---@type {id: string, func: fun(target_uuid: string, target_vars: table, pos: Vector3, is_block: boolean): (yesPats: boolean?, yesHearts: boolean?)}[]
+local handlers = {
+	{
+		id = "patpat", -- Modern pat
+		func = function(target_uuid, target_vars, pos, is_block)
+			local uuid = avatar:getUUID()
+			vars.target = target_uuid
+
+			local yesPats
+			if is_block then
+				yesPats = target_vars.patpat.skull(uuid, pos:unpack())
+			else
+				yesPats = target_vars.patpat.player(uuid)
+			end
+
+			vars.target = nil
+			return yesPats, false
+		end,
+	},
+	{
+		id = "petpet", -- Old pat
+		func = function(target_uuid, target_vars, pos, is_block)
+			if target_vars.yesPat ~= nil and not target_vars.yesPat or target_vars.noPats then return end
+
+			local noPats, noHearts
+			if is_block then
+				noPats, noHearts = target_vars["petpet.playerHead"](avatar:getUUID(), lib.config.expire_time, pos:unpack())
+			else
+				noPats, noHearts = target_vars["petpet"](avatar:getUUID(), lib.config.expire_time)
+			end
+
+			return not noPats, not noHearts
+		end,
+	},
+}
+
 ---Grabs the uuid from this skull's nbt
 ---
 ---Always returns a string to avoid unintentionally erroring when indexing avatar vars
@@ -234,19 +276,27 @@ local function try_patting(target)
 	local target_vars = world.avatarVars()[target_uuid]
 	if not target_vars then return end
 
-	local uuid = avatar:getUUID()
 	local pos = target:getPos()
 
-	safe_call(function()
-		local swing_arm
-		if is_block then
-			swing_arm = target_vars.patpat.skull(uuid, pos:unpack())
-		else
-			swing_arm = target_vars.patpat.player(uuid)
+	for i = 1, #handlers do
+		if target_vars[handlers[i].id] then
+			safe_call(function()
+				local yesPats, yesHearts = handlers[i].func(target_uuid, target_vars, pos, is_block)
+
+				if yesPats then
+					lib.action.swing_arm()
+				end
+
+				if yesHearts then
+					if is_block then
+						lib.action.create_particle(pos + vec(0.5, 0, 0.5), vec(0.5, 0.5, 0.5))
+					else
+						lib.action.create_particle(pos, target --[[@as Entity]]:getBoundingBox())
+					end
+				end
+			end)
 		end
-		if not swing_arm then return end
-		lib.action.swing_arm()
-	end)
+	end
 end
 
 local isHost = host:isHost()
@@ -273,7 +323,6 @@ lib.pat = try_patting
 --#REGION ˚♡ Avatar Vars ♡˚
 --==============================================================================================================================
 
-local vars = {}
 avatar:store("patpat", vars)
 
 ---@alias FOXPat.Group {events: table<string, function[]>, event: Event.Generic, timers: table<string, integer>, counter: integer }
@@ -283,11 +332,14 @@ local skull_group = { events = lib.events.skull, event = events.skull_render, ti
 ---Returns if the uuid is whitelisted
 ---@param uuid string
 ---@return boolean
-local function check_whitelist(uuid)
+local function validate(uuid)
 	if uuid == avatar:getUUID() then return true end -- Allow self-pats
 
 	local ok, entity = pcall(world.getEntity, uuid)
 	if not (ok and entity) then return false end
+
+	local patter_vars = entity:getVariable("patpat")
+	if lib.config.validate and not (patter_vars.patpat and patter_vars.patpat.target == avatar:getUUID()) then return false end
 
 	---@cast entity Player
 
@@ -303,7 +355,7 @@ end
 ---@param uuid string
 ---@return boolean accepted
 function vars.player(uuid)
-	if not check_whitelist(uuid) then return false end
+	if not validate(uuid) then return false end
 	accept_patter(entity_group, uuid)
 	lib.action.create_particle(player:getPos(client.getFrameTime()), player:getBoundingBox())
 	return true
@@ -316,12 +368,22 @@ end
 ---@param z number
 ---@return boolean accepted
 function vars.skull(uuid, x, y, z)
-	if not check_whitelist(uuid) then return false end
+	if not validate(uuid) then return false end
 	local pos = vectors.vec3(x, y, z):floor()
 	accept_patter(skull_group, uuid, pos)
 	lib.action.create_particle(pos + vec(0.5, 0, 0.5), vec(0.5, 0.5, 0.5))
 	return true
 end
+
+-- Backport patpat.player(): yesPats -> petpet(): noPats, noHearts
+
+avatar:store("petpet", function(uuid)
+	return not vars.player(uuid), true
+end)
+
+avatar:store("petpet.playerHead", function(uuid, _, x, y, z)
+	return not vars.skull(uuid, x, y, z), true
+end)
 
 --#ENDREGION --=================================================================================================================
 --#REGION ˚♡ Keybind ♡˚
