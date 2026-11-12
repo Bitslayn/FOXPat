@@ -39,7 +39,7 @@ lib.config = {
 	expire_time = 15,
 
 	---Whether the patter's uuid should be validated. False by default as this breaks compatibility with older modern pat scripts.
-	validate = false
+	validate = false,
 }
 
 ---@class FOXPat.Events
@@ -190,6 +190,42 @@ end
 ---Avatar variables accessor
 local vars = {}
 
+---@type {id: string, func: fun(target_uuid: string, target_vars: table, pos: Vector3, is_block: boolean): (yesPats: boolean?, yesHearts: boolean?)}[]
+local handlers = {
+	{
+		id = "patpat", -- Modern pat
+		func = function(target_uuid, target_vars, pos, is_block)
+			local uuid = avatar:getUUID()
+			vars.target = target_uuid
+
+			local yesPats
+			if is_block then
+				yesPats = target_vars.patpat.skull(uuid, pos:unpack())
+			else
+				yesPats = target_vars.patpat.player(uuid)
+			end
+			
+			vars.target = nil
+			return yesPats, false
+		end,
+	},
+	{
+		id = "petpet", -- Old pat
+		func = function(target_uuid, target_vars, pos, is_block)
+			if target_vars.yesPat ~= nil and not target_vars.yesPat or target_vars.noPats then return end
+
+			local noPats, noHearts
+			if is_block then
+				noPats, noHearts = target_vars["petpet.playerHead"](avatar:getUUID(), lib.config.expire_time, pos:unpack())
+			else
+				noPats, noHearts = target_vars["petpet"](avatar:getUUID(), lib.config.expire_time)
+			end
+
+			return not noPats, not noHearts
+		end,
+	},
+}
+
 ---Grabs the uuid from this skull's nbt
 ---
 ---Always returns a string to avoid unintentionally erroring when indexing avatar vars
@@ -237,24 +273,32 @@ local function try_patting(target)
 		return
 	end
 
-	local target_vars = world.avatarVars()[target_uuid]
+	local target_entity = world.getEntity(target_uuid)
+	if not target_entity then return end
+	local target_vars = target_entity:getVariable()
 	if not target_vars then return end
 
-	local uuid = avatar:getUUID()
 	local pos = target:getPos()
 
-	vars.target = target_uuid
-	safe_call(function()
-		local swing_arm
-		if is_block then
-			swing_arm = target_vars.patpat.skull(uuid, pos:unpack())
-		else
-			swing_arm = target_vars.patpat.player(uuid)
+	for i = 1, #handlers do
+		if target_vars[handlers[i].id] then
+			safe_call(function()
+				local yesPats, yesHearts = handlers[i].func(target_uuid, target_vars, pos, is_block)
+
+				if yesPats then
+					lib.action.swing_arm()
+				end
+
+				if yesHearts then
+					if is_block then
+						lib.action.create_particle(pos + vec(0.5, 0, 0.5), vec(0.5, 0.5, 0.5))
+					else
+						lib.action.create_particle(pos, target_entity:getBoundingBox())
+					end
+				end
+			end)
 		end
-		if not swing_arm then return end
-		lib.action.swing_arm()
-	end)
-	vars.target = nil
+	end
 end
 
 local isHost = host:isHost()
@@ -331,6 +375,16 @@ function vars.skull(uuid, x, y, z)
 	accept_patter(skull_group, uuid, pos)
 	lib.action.create_particle(pos + vec(0.5, 0, 0.5), vec(0.5, 0.5, 0.5))
 	return true
+end
+
+-- Backport patpat.player(): yesPats -> petpet(): noPats, noHearts
+
+vars["petpet"] = function(uuid)
+	return not vars.player(uuid), true
+end
+
+vars["petpet.playerHead"] = function(uuid, _, x, y, z)
+	return not vars.skull(uuid, x, y, z)
 end
 
 --#ENDREGION --=================================================================================================================
