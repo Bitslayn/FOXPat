@@ -3,7 +3,7 @@ ____  ___ __   __
 | __|/ _ \\ \ / /
 | _|| (_) |> w <
 |_|  \___//_/ \_\
-FOX's Patpat v2.3
+FOX's Patpat v2.3b
 
 Github: https://github.com/Bitslayn/FOXPat
 ]]
@@ -384,6 +384,8 @@ end)
 avatar:store("petpet.playerHead", function(uuid, _, x, y, z)
 	return not vars.skull(uuid, x, y, z), true
 end)
+
+avatar:store("patpat.noHearts", true)
 
 --#ENDREGION --=================================================================================================================
 --#REGION ˚♡ Keybind ♡˚
