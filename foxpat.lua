@@ -377,13 +377,13 @@ end
 
 -- Backport patpat.player(): yesPats -> petpet(): noPats, noHearts
 
-vars["petpet"] = function(uuid)
+avatar:store("petpet", function(uuid)
 	return not vars.player(uuid), true
-end
+end)
 
-vars["petpet.playerHead"] = function(uuid, _, x, y, z)
+avatar:store("petpet.playerHead", function(uuid, _, x, y, z)
 	return not vars.skull(uuid, x, y, z), true
-end
+end)
 
 --#ENDREGION --=================================================================================================================
 --#REGION ˚♡ Keybind ♡˚
