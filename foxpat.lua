@@ -187,6 +187,9 @@ end
 --#REGION ˚♡ Outgoing Library ♡˚
 --==============================================================================================================================
 
+---Avatar variables accessor
+local vars = {}
+
 ---Grabs the uuid from this skull's nbt
 ---
 ---Always returns a string to avoid unintentionally erroring when indexing avatar vars
@@ -240,6 +243,7 @@ local function try_patting(target)
 	local uuid = avatar:getUUID()
 	local pos = target:getPos()
 
+	vars.target = target_uuid
 	safe_call(function()
 		local swing_arm
 		if is_block then
@@ -250,6 +254,7 @@ local function try_patting(target)
 		if not swing_arm then return end
 		lib.action.swing_arm()
 	end)
+	vars.target = nil
 end
 
 local isHost = host:isHost()
@@ -276,7 +281,6 @@ lib.pat = try_patting
 --#REGION ˚♡ Avatar Vars ♡˚
 --==============================================================================================================================
 
-local vars = {}
 avatar:store("patpat", vars)
 
 ---@alias FOXPat.Group {events: table<string, function[]>, event: Event.Generic, timers: table<string, integer>, counter: integer }
